@@ -68,7 +68,7 @@ python API 还支持
 ## RDDs Operation
 
 RDDs 有两种类型的操作，transformations 和 Actions；
-Transformations 用来在分布式时，每个work node创造(计算一个新的dataset). Actions 用来最终将计算后的数据，返回给 驱动程序，driver program. 实际环境中，可能会重复利用Action结果,而造成重复计算, 可以通过 persist或catch 来持久化到内存，甚至disk.
+Transformations 用来在分布式时，由每个work node创造(计算一个新的dataset). Actions 用来最终将计算后的数据，返回给 驱动程序，driver program. 实际环境中，可能会重复利用Action结果,而造成重复计算, 可以通过 persist或catch 来持久化到内存，甚至disk.
 
 > 注： spark分布式时，会分 driver program 和 work node， 可以理解为，一个奴隶主(driver program)，多个工作的奴隶(work node). driver 负责分发任务，汇总结果。 work node 负责真正的分布式计算。
 
@@ -111,9 +111,61 @@ Transformations 用来在分布式时，每个work node创造(计算一个新�
 
 > 注意： shuffle 操作 代价很大。 spark 中某些操作涉及到 shuffle 操作。 导致shuffle的操作,例如,重新分区: repartition 和 coalesce, ByKey 操作(除了 counting) like groupByKey and reduceByKey, and join operations like cogroup and join.
 
+### Shuffle operations
+
+Shuffle 操作在 spark分布式 中涉及 到 跨进程，甚至跨机器的 copy 数据进行打乱，开销巨大。
+
+
 > RDDs持久化。前面提到一个操作  persist 和 catch 是将RDDs存储在 内存中，以备后续使用。避免重新计算。  RDDs持久化，还可以通过配置其他参数，来实现不同层级的持久化。
 
 ***
+
+local 设置项，表示本地运行 one thread. local[n] 表示 本地运行 n threads
+
+                          Quick Start: a quick introduction to the Spark API; start here!
+                RDD Programming Guide: overview of Spark basics - RDDs (core but old API), accumulators, and broadcast variables
+  Spark SQL, Datasets, and DataFrames: processing structured data with relational queries (newer API than RDDs)
+                 Structured Streaming: processing structured data streams with relation queries (using Datasets and DataFrames, newer API than DStreams)
+                      Spark Streaming: processing data streams using DStreams (old API)
+                                
+                                MLlib: applying machine learning algorithms
+                               GraphX: processing graphs
+
+RDDs 最基础，最核心的 API(也是最早的，old的API)；
+Spark SQL, Datasets, DataFrames, 比 RDDs 要新的 API，用来处理结构化查询（ relational queries ）
+
+Spark Streaming 处理数据流(data streams )利用 DStreams( old API )
+Structured Streaming, 处理 结构化数据流( structured data streams )利用 ( relation queries ( 基于 Datasets, DataFrames, 比 DStream API要新 ) )
+
+MLlib 和 GraphX 是两个计算库； 处理机器学习 和 图计算相关的。
+
+> 小结：比较有趣的一点是，RDDs 和 Spark SQL， Datasets, DataFrames,  与  Spark Streaming 和 Structured Streaming 一样，都是由基础的 数据，到 结构化数据 的区别，类似的操作。
+
+***
+
+## Spark SQL, DataFrames, Datasets
+
+spark 数据入口：  通过 SparkSession class 来接入数据。  
+spark = SparkSession.builder.appName("Python Spark SQL basic example").config("spark.some.config.option", "some-value").getOrCreate()
+
+
+
+数据接入有两种方式:   create DataFrames from an existing RDD, from a Hive table, or from Spark data sources.
+1. From an existing RDD.  
+
+        from pyspark.sql import Row
+        sc = spark.sparkContext
+        lines = sc.textFile("examples/src/main/resources/people.txt")
+        parts = lines.map(lambda l: l.split(","))
+        people = parts.map(lambda p: Row(name=p[0], age=int(p[1])))
+        schemaPeople = spark.createDataFrame(people)
+        schemaPeople.createOrReplaceTempView("people")
+
+2. From Spark data sources.
+
+
+
+
 
 
 
